@@ -9,8 +9,9 @@ module dm_4k( addr, din, DMWr, clk, dout );
    reg [31:0] dmem[1023:0];
    
    always @(posedge clk) begin
-      if (DMWr)
-         dmem[addr] <= din;
+      $display("DMWr=%1B, din=%8X, TargetAddr=%D", DMWr, din, addr);
+
+      if (DMWr) dmem[addr] <= din;
 
       $display("addr=%8X",addr);//addr to DM
       $display("din=%8X",din);//data to DM

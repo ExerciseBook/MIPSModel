@@ -15,7 +15,7 @@ module mips( clk, rst );
 	wire Mem2R;						//数据存储器到寄存器堆
 	wire MemW;						//写数据存储器
 	wire RegW;						//寄存器堆写入数据
-	wire Alusrc;					//运算器操作数选择
+	wire AluSrc;					//运算器操作数选择
 	wire [1:0] ExtOp;				//位扩展/符号扩展选择
 	wire [1:0] ALUOp;	   	   //Alu运算选择
 
@@ -52,7 +52,7 @@ module mips( clk, rst );
 
    // 寄存器相关
    wire [4:0] RF_rd;
-   assign RF_rd = (RegDst === 0) ? rt : rd ;
+   assign RF_rd = (RegDst === 0) ? rd : rt ;
 
    // 符号扩展相关
    wire [31:0] Imm32;
@@ -69,7 +69,6 @@ module mips( clk, rst );
    assign RF_WD = (Mem2R == 1) ? DM_Out : Alu_Result;
 
    // 算数运算相关
-   wire AluSrc;
    wire [31:0] AluMux_Result;
    assign AluMux_Result = (AluSrc === 0) ? RD2 : Imm32;
 
@@ -96,7 +95,7 @@ module mips( clk, rst );
 
    // 算术运算模块
    alu U_ALU (
-      .A(RD1), .B(AluMux_Result), .ALUOp(ALUOp), .C(Alu_Result), .Zero(Zero)
+      .A(RD1), .B(AluMux_Result), .ALUOp(ALUOp), .C(Alu_Result), .Zero(zero)
    );
 
    // 数据内存模块
