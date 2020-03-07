@@ -8,7 +8,7 @@ module mips_tb();
     
    initial begin
       $readmemh( "code.txt" , U_MIPS.U_IM.imem ) ;
-      $monitor("PC = 0x%8X, IR = 0x%8X", U_MIPS.U_PC.PC, U_MIPS.instr ); 
+      $monitor("PC = 0x%8X, IR = 0x%8X", U_MIPS.U_PC.PC, U_MIPS.AnInstruction ); 
       clk = 1 ;
       rst = 0 ;
       #5 ;
