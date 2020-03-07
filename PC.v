@@ -4,9 +4,8 @@ module PC( clk, rst, PCWr, NPC, PC );
    input         rst;
    input         PCWr;
    input  [31:2] NPC;
-   output [31:2] PC;
+   output reg[31:2] PC;
    
-   reg [31:2] PC;
    reg [1:0] tmp;
                
    always @(posedge clk or posedge rst) begin

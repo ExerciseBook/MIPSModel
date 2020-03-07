@@ -12,29 +12,33 @@ module mips( clk, rst );
    wire 		     BSel;
    wire 		     Zero;
    
-   
-   assign Op = instr[31:26];
-   assign Funct = instr[5:0];
-   assign rs = instr[25:21];
-   assign rt = instr[20:16];
-   assign rd = instr[15:11];
-   assign Imm16 = instr[15:0];
-   assign IMM = instr[25:0];
-   
-   
+	wire [31:0] PC;
+   assign PCAddr = PC[11:2];
+
    PC U_PC (
       .clk(clk), .rst(rst), .PCWr(PCWr), .NPC(NPC), .PC(PC)
    ); 
    
+	wire [31:0] im_dout;
+
    im_4k U_IM ( 
-      .addr(PC[9:0]) , .dout(im_dout)
+      .addr(PCAddr) , .dout(im_dout)
    );
-   
-    
+
+   assign Op = im_dout[31:26];
+   assign Funct = im_dout[5:0];
+   assign rs = im_dout[25:21];
+   assign rt = im_dout[20:16];
+   assign rd = im_dout[15:11];
+   assign Imm16 = im_dout[15:0];
+   assign IMM = im_dout[25:0];
+
    RF U_RF (
       .A1(rs), .A2(rt), .A3(A3), .WD(WD), .clk(clk), 
       .RFWr(RFWr), .RD1(RD1), .RD2(RD2)
    );
    
+      
+
   
 endmodule

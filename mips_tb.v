@@ -1,4 +1,4 @@
- module mips_tb();
+module mips_tb();
     
    reg clk, rst;
     
