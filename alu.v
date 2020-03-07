@@ -10,8 +10,9 @@ module alu (A, B, ALUOp, C, Zero);
        
    always @( A or B or ALUOp ) begin
       case ( ALUOp )
-         //TODO 先鸽为敬
-         default:   ;
+         2'b00 : C = A + B;
+         2'b01 : C = A - B;
+         default: C = A | B; //TODO 先整完第一个 Checkpoint
       endcase
    end // end always;
    

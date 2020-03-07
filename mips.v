@@ -1,36 +1,39 @@
 `include "ctrl_encode_def.v"
+`include "instruction_def.v"
+
 module mips( clk, rst );
+
+   // 时钟相关
    input   clk;
    input   rst;
    
-   wire 		     RFWr;
-   wire 		     DMWr;
-   wire 		     PCWr;
-   wire 		     IRWr;
-   wire [1:0]    EXTOp = `EXT_SIGNED;
-   wire [1:0]    ALUOp;
-   wire [1:0]    NPCOp;
-   wire 		     BSel;
-   wire 		     Zero;
+   // 控制信号相关
+	wire jump;						//指令跳转
+	wire RegDst;						
+	wire Branch;					//分支
+	wire MemR;						//读存储器
+	wire Mem2R;						//数据存储器到寄存器堆
+	wire MemW;						//写数据存储器
+	wire RegW;						//寄存器堆写入数据
+	wire Alusrc;					//运算器操作数选择
+	wire [1:0] ExtOp;				//位扩展/符号扩展选择
+	wire [1:0] ALUOp;	   	   //Alu运算选择
 
+   // 算数运算相关
+   wire zero;  
+   wire [31:0] Alu_Result;
 
-   // 指令地址模块
+   // 指令地址相关
 	wire [31:0] PC;
 	wire [31:0] NPC;
    wire [9:0] PCAddr;
    assign PCAddr = PC[11:2];
+   assign PcSel = ( ( Branch && zero ) == 1 ) ? 1 : 0 ;
 
-   PC U_PC (
-      .clk(clk), .rst(rst), .PCWr(PCWr), .NPC(NPC), .PC(PC)
-   ); 
-   
-   // 指令模块
-	wire [31:0] AnInstruction;
-   im_4k U_IM ( 
-      .addr(PCAddr) , .dout(AnInstruction)
-   );
+   // 指令本体
+   wire [31:0] AnInstruction;
 
-   // 解析指令
+   // 拆分指令
    wire [5:0] Op;
    wire [5:0] Funct;
    wire [4:0] rs;
@@ -47,50 +50,74 @@ module mips( clk, rst );
    assign Imm16 = AnInstruction[15:0];
    assign IMM = AnInstruction[25:0];
 
-   //TODO RF_rd 需要加选择器处理
+   // 寄存器相关
    wire [4:0] RF_rd;
+   assign RF_rd = (RegDst === 0) ? rt : rd ;
 
-   //TODO RF_WD 需要加选择器处理 (写回数据)
-   wire [31:0] RF_WD;
+   // 符号扩展相关
+   wire [31:0] Imm32;
 
-   // 寄存器模块
+   // 数据内存相关
+   wire [31:0] DM_Out;
+   wire [11:2] DM_Addr;
+   assign DM_Addr = Alu_Result[11:2];
+
+   // 寄存器相关
    wire [31:0] RD1;
    wire [31:0] RD2;
+   wire [31:0] RF_WD;
+   assign RF_WD = (Mem2R == 1) ? DM_Out : Alu_Result;
+
+   // 算数运算相关
+   wire AluSrc;
+   wire [31:0] AluMux_Result;
+   assign AluMux_Result = (AluSrc === 0) ? RD2 : Imm32;
+
+   // 指令计数器模块
+   PC U_PC (
+      .Clk(clk), .PcReSet(rst), .PC(PC), .PcSel(PcSel), .Address(Imm32)
+   ); 
+   
+   // 指令模块
+   im_4k U_IM ( 
+      .addr(PCAddr) , .dout(AnInstruction)
+   );
+
+   // 寄存器模块   
    RF U_RF (
       .A1(rs), .A2(rt), .A3(RF_rd), .WD(RF_WD), .clk(clk), 
-      .RFWr(RFWr), .RD1(RD1), .RD2(RD2)
+      .RFWr(RegW), .RD1(RD1), .RD2(RD2)
    );
 
    // 符号扩展模块
-   wire [31:0] Imm32;
    EXT U_SIGNEDEXT (
-      .Imm16(Imm16), .EXTOp(EXTOp), .Imm32(Imm32)
+      .Imm16(Imm16), .EXTOp(ExtOp), .Imm32(Imm32)
    );
 
-   //TODO 从 ALUOp 解析出 AluMux_Op
-   wire AluMux_Op;
-
-
-   // 算术运算模块第二个输入口前的选择器
-   wire [31:0] AluMux_Result;
-   mux2 #(.WIDTH(32)) AluInputMux (.d0(RD2), .d1(Imm32), .s(AluMux_Op), .y(AluMux_Result));
-
-   //TODO 将 Funct 转换为 ALUOp
-
    // 算术运算模块
-   wire [31:0] Alu_Result;
    alu U_ALU (
       .A(RD1), .B(AluMux_Result), .ALUOp(ALUOp), .C(Alu_Result), .Zero(Zero)
    );
 
    // 数据内存模块
-   wire [31:0] DM_Out;
-   wire [11:2] DM_Addr;
-   assign DM_Addr = Alu_Result[11:2];
    dm_4k U_DM (
-      .addr(DM_Addr), .din(RD2), .DMWr(DMWr), .clk(clk), .dout(DM_Out)
+      .addr(DM_Addr), .din(RD2), .DMWr(MemW), .clk(clk), .dout(DM_Out)
    );
-   
-   //TODO PC+4 和 PC跳转
-  
+
+   // 信号控制模块
+   SingalManager U_SingalManager(
+      .jump(jump),
+      .RegDst(RegDst),
+      .Branch(Branch),
+      .MemR(MemR),
+      .Mem2R(Mem2R),
+      .MemW(MemW),
+      .RegW(RegW),
+      .Alusrc(AluSrc),
+      .ExtOp(ExtOp),
+      .Aluctrl(ALUOp),
+      .OpCode(Op),
+      .funct(Funct)
+   );
+
 endmodule

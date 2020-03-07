@@ -4,8 +4,8 @@
 `define NPC_JUMP    2'b10   
 
 // EXT control signal
-`define EXT_ZERO    2'b00
-`define EXT_SIGNED  2'b01
+`define EXT_ZERO    2'b01
+`define EXT_SIGNED  2'b00
 `define EXT_HIGHPOS 2'b10
 
 // ALU control signal
