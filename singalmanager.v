@@ -32,14 +32,14 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
 	begin
 
 		case (OpCode)
-			6'b000000 : begin
+			`INSTR_RTYPE_OP : begin
 				case (funct)
-					6'b100001: begin
+					`INSTR_ADDU_FUNCT: begin
 						out = 8'b00000010; // addu
 						ExtOp = `EXT_ZERO;
 						Aluctrl = `ALUOp_ADDU;
 					end
-					6'b100011: begin
+					`INSTR_SUBU_FUNCT: begin
 						out = 8'b00000010; // subu
 						ExtOp = `EXT_ZERO;
 						Aluctrl = `ALUOp_SUBU;
@@ -51,22 +51,22 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
 					end
 				endcase
 			end
-			6'b001101: begin
+			`INSTR_ORI_OP: begin
 				out = 8'b01000011; // ori
 				ExtOp = `EXT_ZERO;
 				Aluctrl = `ALUOp_OR;
 			end
-			6'b101011: begin
+			`INSTR_SW_OP: begin
 				out = 6'b01000101; // sw
 				ExtOp = `EXT_SIGNED;
 				Aluctrl = `ALUOp_ADD;
 			end
-			6'b100011: begin
+			`INSTR_LW_OP: begin
 				out = 8'b01011011; // lw
 				ExtOp = `ALUOp_ADDU;
 				Aluctrl = `ALUOp_ADD;
 			end
-			6'b000100: begin
+			`INSTR_BEQ_OP: begin
 				out = 8'b00100000; // beq
 				ExtOp = `EXT_SIGNED;
 				Aluctrl = `ALUOp_SUB;
