@@ -2,7 +2,7 @@
 module alu (A, B, ALUOp, C, Zero);
            
    input  [31:0] A, B;
-   input  [1:0]  ALUOp;
+   input  [4:0]  ALUOp;
    output [31:0] C;
    output        Zero;
    
@@ -10,14 +10,31 @@ module alu (A, B, ALUOp, C, Zero);
        
    always @( A or B or ALUOp ) begin
       case ( ALUOp )
-         2'b00 : C = A + B;
-         2'b01 : C = A - B;
-         default: C = A | B; //TODO 先整完第一个 Checkpoint
+      // `ALUOp_NOP  :
+         `ALUOp_ADDU : C = A + B;
+         `ALUOp_ADD  : C = A + B;
+         `ALUOp_SUBU : C = A - B;
+         `ALUOp_SUB  : C = A + (~B) + 1;
+         `ALUOp_AND  : C = A & B;
+         `ALUOp_OR   : C = A | B;
+         `ALUOp_NOR  : C = ~(A | B);
+         `ALUOp_XOR  : C = A ^ B;
+         `ALUOp_SLT  : if ((A + (~B) + 1) & 32'h80000000 === 32'h80000000) C = 1; else C = 0; //TODO
+         `ALUOp_SLTU : if (A < B) C = 1; else C = 0;
+      // `ALUOp_EQL  :
+      // `ALUOp_BNE  :
+      // `ALUOp_GT0  :
+      // `ALUOp_GE0  :
+      // `ALUOp_LT0  :
+      // `ALUOp_LE0  :
+         `ALUOp_SLL  : C = A << B;
+         `ALUOp_SRL  : C = A >> B;
+         `ALUOp_SRA  : C = A >>> B;
+         default:   ;
       endcase
 
-      $display("A=%8X, B=%8X, C=%8X, ALUOp=%2B",A,B,C,ALUOp);
-   end // end always;
-   
+   end
+
    assign Zero = (A == B) ? 1 : 0;
 
 endmodule

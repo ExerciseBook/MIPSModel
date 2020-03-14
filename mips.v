@@ -17,7 +17,7 @@ module mips( clk, rst );
 	wire RegW;						//寄存器堆写入数据
 	wire AluSrc;					//运算器操作数选择
 	wire [1:0] ExtOp;				//位扩展/符号扩展选择
-	wire [1:0] ALUOp;	   	   //Alu运算选择
+	wire [4:0] ALUOp;	   	   //Alu运算选择
 
    // 算数运算相关
    wire zero;  
