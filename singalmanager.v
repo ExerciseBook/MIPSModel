@@ -35,101 +35,101 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
 			`INSTR_RTYPE_OP : begin
 				case (funct)
 					`INSTR_ADDU_FUNCT: begin // addu
-						out = 10'b0000000100;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_ADDU;
+						out <= 10'b0000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_ADDU;
 					end
 					`INSTR_ADD_FUNCT: begin // add
-						out = 10'b0000000100;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_ADD;
+						out <= 10'b0000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_ADD;
 					end
 					`INSTR_SUBU_FUNCT: begin // subu
-						out = 10'b0000000100;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_SUBU;
+						out <= 10'b0000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_SUBU;
 					end
 					`INSTR_SUB_FUNCT: begin // sub
-						out = 10'b0000000100;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_SUB;
+						out <= 10'b0000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_SUB;
 					end
 					`INSTR_SLT_FUNCT: begin // slt
-						out = 10'b0000000100;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_SLT;
+						out <= 10'b0000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_SLT;
 					end
 					`INSTR_SLL_FUNCT: begin // sll
-						out = 10'b0000000111;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_SLL;
+						out <= 10'b0000000111;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_SLL;
 					end
 					`INSTR_SRL_FUNCT: begin // srl
-						out = 10'b0000000111;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_SRL;
+						out <= 10'b0000000111;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_SRL;
 					end
 					`INSTR_SRA_FUNCT: begin // sra
-						out = 10'b0000000111;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_SRA;
-					end
-					default: begin
-						out = 10'b000000000;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_NOP;
+						out <= 10'b0000000111;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_SRA;
 					end
 					`INSTR_AND_FUNCT: begin // and
-						out = 10'b0000000100;
-						ExtOp = `EXT_ZERO;
-						Aluctrl = `ALUOp_AND;
+						out <= 10'b0000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_AND;
+					end
+					default: begin
+						out <= 10'b000000000;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_NOP;
 					end
 				endcase
 			end
 			`INSTR_ORI_OP: begin // ori
-				out = 10'b0100000101;
-				ExtOp = `EXT_ZERO;
-				Aluctrl = `ALUOp_OR;
+				out <= 10'b0100000101;
+				ExtOp <= `EXT_ZERO;
+				Aluctrl <= `ALUOp_OR;
 			end
 			`INSTR_SW_OP: begin // sw
-				out = 10'b0100001001;
-				ExtOp = `EXT_SIGNED;
-				Aluctrl = `ALUOp_ADD;
+				out <= 10'b0100001001;
+				ExtOp <= `EXT_SIGNED;
+				Aluctrl <= `ALUOp_ADD;
 			end
 			`INSTR_LW_OP: begin // lw
-				out = 10'b0100110101;
-				ExtOp = `ALUOp_ADDU;
-				Aluctrl = `ALUOp_ADD;
+				out <= 10'b0100110101;
+				ExtOp <= `ALUOp_ADDU;
+				Aluctrl <= `ALUOp_ADD;
 			end
 			`INSTR_BEQ_OP: begin // beq
-				out = 10'b0010000000;
-				ExtOp = `EXT_SIGNED;
-				Aluctrl = `ALUOp_SUB;
+				out <= 10'b0010000000;
+				ExtOp <= `EXT_SIGNED;
+				Aluctrl <= `ALUOp_SUB;
 			end
 			`INSTR_BNE_OP: begin // bne
-				out = 10'b0001000000;
-				ExtOp = `EXT_SIGNED;
-				Aluctrl = `ALUOp_SUB;
+				out <= 10'b0001000000;
+				ExtOp <= `EXT_SIGNED;
+				Aluctrl <= `ALUOp_SUB;
 			end
 			`INSTR_LUI_OP: begin // lui
-				out = 10'b0100000101;
-				ExtOp = `EXT_HIGHPOS;
-				Aluctrl = `ALUOp_OR;
+				out <= 10'b0100000101;
+				ExtOp <= `EXT_HIGHPOS;
+				Aluctrl <= `ALUOp_OR;
 			end
 			`INSTR_SLTI_OP: begin // slti
-				out = 10'b0100000101;
-				ExtOp = `EXT_SIGNED;
-				Aluctrl = `ALUOp_SLT;
+				out <= 10'b0100000101;
+				ExtOp <= `EXT_SIGNED;
+				Aluctrl <= `ALUOp_SLT;
 			end
 			`INSTR_J_OP: begin // j
-				out = 10'b0011000000;
-				ExtOp = `EXT_ZERO;
-				Aluctrl = `ALUOp_NOP;
+				out <= 10'b0011000000;
+				ExtOp <= `EXT_ZERO;
+				Aluctrl <= `ALUOp_NOP;
 			end
 			default: begin
-				out = 10'b0000000000;
-				ExtOp = `EXT_ZERO;
-				Aluctrl = `ALUOp_NOP;
+				out <= 10'b0000000000;
+				ExtOp <= `EXT_ZERO;
+				Aluctrl <= `ALUOp_NOP;
 			end
 		endcase
 
