@@ -7,8 +7,17 @@ module alu (A, B, ALUOp, C, Zero);
    output        Zero;
    
    reg [31:0] C;
-       
+
+   wire [4:0] sa;
+   assign sa = B[10:6];
+   
+
+   wire signed [31:0] SignedA, SignedB;
+   assign SignedA = A;
+   assign SignedB = B;
+
    always @( A or B or ALUOp ) begin
+
       case ( ALUOp )
       // `ALUOp_NOP  :
          `ALUOp_ADDU : C = A + B;
@@ -19,7 +28,7 @@ module alu (A, B, ALUOp, C, Zero);
          `ALUOp_OR   : C = A | B;
          `ALUOp_NOR  : C = ~(A | B);
          `ALUOp_XOR  : C = A ^ B;
-         `ALUOp_SLT  : if ((A + (~B) + 1) & 32'h80000000 === 32'h80000000) C = 1; else C = 0; //TODO
+         `ALUOp_SLT  : if ( ((A + (~B) + 1) & 32'h80000000) === 32'h80000000) C = 1; else C = 0; //TODO
          `ALUOp_SLTU : if (A < B) C = 1; else C = 0;
       // `ALUOp_EQL  :
       // `ALUOp_BNE  :
@@ -27,12 +36,13 @@ module alu (A, B, ALUOp, C, Zero);
       // `ALUOp_GE0  :
       // `ALUOp_LT0  :
       // `ALUOp_LE0  :
-         `ALUOp_SLL  : C = A << B;
-         `ALUOp_SRL  : C = A >> B;
-         `ALUOp_SRA  : C = A >>> B;
+         `ALUOp_SLL  : C = A << sa;
+         `ALUOp_SRL  : C = A >> sa;
+         `ALUOp_SRA  : C = SignedA >>> sa;
          default:   ;
       endcase
 
+      $display("A=%8X, B=%8X, sa=%2X ALUOP=%5b, C=%8X", A, B, sa, ALUOp, C);
    end
 
    assign Zero = (A == B) ? 1 : 0;

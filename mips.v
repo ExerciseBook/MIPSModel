@@ -10,12 +10,12 @@ module mips( clk, rst );
    // 控制信号相关
 	wire jump;						//指令跳转
 	wire RegDst;						
-	wire Branch;					//分支
+	wire [1:0]Branch;				//分支
 	wire MemR;						//读存储器
 	wire Mem2R;						//数据存储器到寄存器堆
 	wire MemW;						//写数据存储器
 	wire RegW;						//寄存器堆写入数据
-	wire AluSrc;					//运算器操作数选择
+	wire [1:0] AluSrc;			//运算器操作数选择
 	wire [1:0] ExtOp;				//位扩展/符号扩展选择
 	wire [4:0] ALUOp;	   	   //Alu运算选择
 
@@ -28,7 +28,7 @@ module mips( clk, rst );
 	wire [31:0] NPC;
    wire [9:0] PCAddr;
    assign PCAddr = PC[11:2];
-   assign PcSel = ( ( Branch && zero ) == 1 ) ? 1 : 0 ;
+   assign PcSel = ( ( (Branch[1] && zero) === 1) || ( (Branch[0]===1) &&(zero===0) ) ) ? 1 : 0 ;
 
    // 指令本体
    wire [31:0] AnInstruction;
@@ -69,12 +69,16 @@ module mips( clk, rst );
    assign RF_WD = (Mem2R == 1) ? DM_Out : Alu_Result;
 
    // 算数运算相关
-   wire [31:0] AluMux_Result;
-   assign AluMux_Result = (AluSrc === 0) ? RD2 : Imm32;
+   wire [31:0] Alu_AIn;
+   //assign Alu_AIn = RD1;
+   assign Alu_AIn = (AluSrc[1] === 0) ? RD1 : RD2;
+
+   wire [31:0] Alu_BIn;
+   assign Alu_BIn = (AluSrc[0] === 0) ? RD2 : Imm32;
 
    // 指令计数器模块
    PC U_PC (
-      .Clk(clk), .PcReSet(rst), .PC(PC), .PcSel(PcSel), .Address(Imm32)
+      .Clk(clk), .PcReSet(rst), .PC(PC), .PcSel(PcSel), .Address(Imm32), .Branch(Branch), .JumpTarget(IMM)
    ); 
    
    // 指令模块
@@ -95,7 +99,7 @@ module mips( clk, rst );
 
    // 算术运算模块
    alu U_ALU (
-      .A(RD1), .B(AluMux_Result), .ALUOp(ALUOp), .C(Alu_Result), .Zero(zero)
+      .A(Alu_AIn), .B(Alu_BIn), .ALUOp(ALUOp), .C(Alu_Result), .Zero(zero)
    );
 
    // 数据内存模块
