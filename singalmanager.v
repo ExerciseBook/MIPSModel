@@ -80,6 +80,11 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
 						ExtOp <= `EXT_ZERO;
 						Aluctrl <= `ALUOp_AND;
 					end
+					`INSTR_OR_FUNCT: begin // or
+						out <= 12'b000000000100;
+						ExtOp <= `EXT_ZERO;
+						Aluctrl <= `ALUOp_OR;
+					end
 					`INSTR_JR_FUNCT: begin // jr
 						out <= 12'b000111000000;
 						ExtOp <= `EXT_ZERO;
@@ -96,6 +101,11 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
 				out <= 12'b010000000101;
 				ExtOp <= `EXT_ZERO;
 				Aluctrl <= `ALUOp_OR;
+			end
+			`INSTR_ADDI_OP: begin // addi
+				out <= 12'b010000000101;
+				ExtOp <= `EXT_SIGNED;
+				Aluctrl <= `ALUOp_ADD;
 			end
 			`INSTR_SW_OP: begin // sw
 				out <= 12'b010000001001;
