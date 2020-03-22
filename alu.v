@@ -23,12 +23,12 @@ module alu (A, B, ALUOp, C, Zero);
          `ALUOp_ADDU : C = A + B;
          `ALUOp_ADD  : C = A + B;
          `ALUOp_SUBU : C = A - B;
-         `ALUOp_SUB  : C = A + (~B) + 1;
+         `ALUOp_SUB  : C = SignedA - SignedB;
          `ALUOp_AND  : C = A & B;
          `ALUOp_OR   : C = A | B;
          `ALUOp_NOR  : C = ~(A | B);
          `ALUOp_XOR  : C = A ^ B;
-         `ALUOp_SLT  : if ( ((A + (~B) + 1) & 32'h80000000) === 32'h80000000) C = 1; else C = 0; //TODO
+         `ALUOp_SLT  : if (SignedA < SignedB) C = 1; else C = 0; //TODO
          `ALUOp_SLTU : if (A < B) C = 1; else C = 0;
       // `ALUOp_EQL  :
       // `ALUOp_BNE  :
