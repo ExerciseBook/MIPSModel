@@ -15,7 +15,10 @@ module PC(Clk, PcReSet, PC, PcSel, Address, Branch, JumpTarget, JrTarget);
 
 	always@(posedge Clk or posedge PcReSet)
 	begin
-		if(PcReSet == 1) PC <= 32'h0000_3000;
+		if(PcReSet == 1) begin
+			PC <= 32'h0000_3000;
+			temp <= 32'h0000_3000;
+		end
 		
 		if (Branch == 3'b111) begin
 			PC = JrTarget;
@@ -27,6 +30,8 @@ module PC(Clk, PcReSet, PC, PcSel, Address, Branch, JumpTarget, JrTarget);
 			temp[30] = PC[30];
 			temp[29] = PC[29];
 			temp[28] = PC[28];
+			temp[1] = 0;
+			temp[0] = 0;
 			PC = temp;
 		end
 		else 
