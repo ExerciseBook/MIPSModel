@@ -18,6 +18,6 @@ module mips_tb();
    end
    
    always
-	   #(50) clk = ~clk;
+       #(50) clk = ~clk;
    
 endmodule
