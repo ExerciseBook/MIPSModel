@@ -101,17 +101,21 @@ module mips( clk, rst );
    wire [31:0] Imm32;
 
    // 寄存器相关
-   wire [31:0] ID_RD1;
-   wire [31:0] ID_RD2;
+   wire [31:0] ID_RD1_RF;
+   wire [31:0] ID_RD2_RF;
    wire [31:0] RF_WD;
    assign RF_WD = (RegDst[0] === 0) ? ( WB_WBData ) : (ID_PC + 4); 
 
+   // 转发相关 [定义]
+   wire [31:0] ID_RD1_DE;
+   wire [31:0] ID_RD2_DE;   
+
    // 算数运算相关
    wire [31:0] ID_Alu_AIn;
-   assign ID_Alu_AIn = (AluSrc[1] === 0) ? ID_RD1 : ID_RD2;
+   assign ID_Alu_AIn = (AluSrc[1] === 0) ? ID_RD1_DE : ID_RD2_DE;
 
    wire [31:0] ID_Alu_BIn;
-   assign ID_Alu_BIn = (AluSrc[0] === 0) ? ID_RD2 : Imm32;
+   assign ID_Alu_BIn = (AluSrc[0] === 0) ? ID_RD2_DE : Imm32;
 
    // 指令计数器模块
    PC U_PC (
@@ -126,7 +130,7 @@ module mips( clk, rst );
    // 寄存器模块   
    RF U_RF (
       .A1(rs), .A2(rt), .A3(RF_rd), .WD(RF_WD), .clk(clk), 
-      .RFWr(WB_RegW), .RD1(ID_RD1), .RD2(ID_RD2)
+      .RFWr(WB_RegW), .RD1(ID_RD1_RF), .RD2(ID_RD2_RF)
    );
 
    // 符号扩展模块
@@ -155,8 +159,8 @@ module mips( clk, rst );
 
    // ID/EX 级寄存器
    wire [32+32+32+32+5+1+1+1+1+5-1 : 0] Pipline_IDEXRegister_in;
-   //                                32   + 32        + 32        + 32    + 5    + 1     + 1       + 1      + 1      , 5
-   assign Pipline_IDEXRegister_in = {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2, ID_RF_rd, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp};
+   //                                32   + 32        + 32        + 32       + 5    + 1     + 1       + 1      + 1      , 5
+   assign Pipline_IDEXRegister_in = {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2_RF, ID_RF_rd, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp};
    wire [32+32+32+32+5+1+1+1+1+5-1 : 0] Pipline_IDEXRegister_out;
 
    wire Pipline_IDEXRegister_reset;
@@ -192,7 +196,7 @@ module mips( clk, rst );
 
    // 算术运算模块
    alu U_ALU (
-      .A(EX_Alu_AIn), .B(EX_Alu_AIn), .ALUOp(EX_ALUOp), .C(EX_Alu_Result), .Zero(EX_zero)
+      .A(EX_Alu_AIn), .B(EX_Alu_BIn), .ALUOp(EX_ALUOp), .C(EX_Alu_Result), .Zero(EX_zero)
    );
 
    // EX/MEM 级寄存器
@@ -244,5 +248,9 @@ module mips( clk, rst );
    // MEM/WB 级寄存器
    //                                 32   + 32         + 5        + 1
    assign Pipline_MEMWBRegister_in = {MEM_PC, MEM_WBData, MEM_RF_rd, MEM_RegW};
+
+   // 转发相关 [判断]
+   assign ID_RD1_DE = (MEM_RF_rd == rs) ? MEM_WBData : ((EX_RF_rd == rs) ? EX_Alu_Result : ID_RD1_RF);
+   assign ID_RD2_DE = (MEM_RF_rd == rt) ? MEM_WBData : ((EX_RF_rd == rt) ? EX_Alu_Result : ID_RD2_RF);
 
 endmodule

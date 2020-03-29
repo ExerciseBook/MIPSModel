@@ -45,6 +45,10 @@ module alu (A, B, ALUOp, C, Zero);
       $display("A=%8X, B=%8X, sa=%2X ALUOP=%5b, C=%8X", A, B, sa, ALUOp, C);
    end
 
+   initial begin
+      C <= 32'h0000_0000;
+   end
+
    assign Zero = (A == B) ? 1 : 0;
 
 endmodule

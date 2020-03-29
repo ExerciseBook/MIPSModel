@@ -15,5 +15,9 @@ module EXT( Imm16, EXTOp, Imm32 );
          default: ;
       endcase
    end // end always
-    
+   
+   initial begin
+      Imm32 <= 32'h0000_0000;
+   end
+
 endmodule
