@@ -14,14 +14,14 @@ L0: ori $29, $0, 12
     sw $3, 4($0)
     sw $4, 4($29)
     lw $5, 0($0)
-    nop
-    nop
+    # nop
+    # nop
     beq $2, $5, L2
     nop
 L1: lw $3, 4($29)
 L2: lw $5, 4($0)
-    nop
-    nop
+    # nop
+    # nop
     beq $3, $5, L1
     nop
     subu $6, $6, $2

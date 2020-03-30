@@ -277,6 +277,13 @@ module mips( clk, rst );
 
    // 是否需要清理下一条指令 [跳转的时候 IF 级已经预加载了一条指令了，如果需要跳转的时候这条指令就是有问题的]
    //assign Bobbles = PcSel || (Branch[1] && Branch[0]);
-   assign Bobbles = PcSel && ( (EX_ALUOp != 0) && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) );
+   assign Bobbles =
+      (Branch[1] ^ Branch[0]) && (
+         ( (EX_ALUOp != 0) && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) // 
+         || 
+         ( EX_Mem2R && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) //
+         ||
+         ( MEM_Mem2R && (MEM_RF_rd != 0) && ((MEM_RF_rd == rs) || (MEM_RF_rd == rt)) )
+      );
 
 endmodule

@@ -14,9 +14,9 @@ L0:
 
     lw   $6, 0($0)          # $s6 = 0xa0006644
     slti $7, $6, 0x7fff     # $7 = 1  $6<$5
-    nop
-    bne  $7, $0, L2         # goto L2
     # nop
+    bne  $7, $0, L2         # goto L2
+    nop
 L1:
     j    L3
     nop
