@@ -11,7 +11,6 @@ module PiplineUniversalRegister #(parameter WIDTH = 32)(clk, rst, Wr, in, out);
    always @(posedge clk or posedge rst) begin
       if ( rst ) begin
          out = 0;
-         out[WIDTH-1: WIDTH-32] = 32'h0000_3000;
       end
       else// if (Wr)
          out <= in;
@@ -33,7 +32,6 @@ module PiplineUniversalRegisterNeg #(parameter WIDTH = 32)(clk, rst, Wr, in, out
    always @(negedge clk or posedge rst) begin
       if ( rst ) begin
          out = 0;
-         out[WIDTH-1: WIDTH-32] = 32'h0000_3000;
       end
       else// if (Wr)
          out <= in;

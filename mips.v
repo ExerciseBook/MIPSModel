@@ -33,16 +33,18 @@ module mips( clk, rst );
 
 
    // 控制信号相关
-    wire jump;                     //指令跳转
-    wire [1:0]RegDst;                        
-    wire [2:0]Branch;              //分支
-    wire ID_MemR;                  //读存储器
-    wire ID_Mem2R;                 //数据存储器到寄存器堆
-    wire ID_MemW;                  //写数据存储器
-    wire ID_RegW;                  //寄存器堆写入数据
-    wire [1:0] AluSrc;             //运算器操作数选择
-    wire [1:0] ExtOp;              //位扩展/符号扩展选择
-    wire [4:0] ID_ALUOp;           //Alu运算选择
+   wire jump;                    //指令跳转
+   wire [1:0]RegDst;             
+   wire [2:0]Branch;             //分支
+   wire ID_MemR;                 //读存储器
+   wire ID_Mem2R;                //数据存储器到寄存器堆
+   wire ID_MemW;                 //写数据存储器
+   wire ID_RegW;                 //寄存器堆写入数据
+   wire [1:0] AluSrc;            //运算器操作数选择
+   wire [1:0] ExtOp;             //位扩展/符号扩展选择
+   wire [4:0] ID_ALUOp;          //Alu运算选择
+
+   wire Bobbles;                 //气泡
 
    // 算数运算相关
    wire ID_zero;  
@@ -60,9 +62,9 @@ module mips( clk, rst );
 
    // IF/ID 级寄存器
    wire [32+32-1 : 0] Pipline_IFIDRegister_in;
-   assign Pipline_IFIDRegister_in = {IF_PC, AnInstruction};
    wire [32+32-1 : 0] Pipline_IFIDRegister_out;
-   
+   assign Pipline_IFIDRegister_in = Bobbles ? Pipline_IFIDRegister_out : {IF_PC, AnInstruction};
+
    wire Pipline_IFIDRegister_reset;
    wire Pipline_IFIDRegister_reset_;
    assign Pipline_IFIDRegister_reset_ = rst | Pipline_IFIDRegister_reset;
@@ -119,7 +121,7 @@ module mips( clk, rst );
 
    // 指令计数器模块
    PC U_PC (
-      .Clk(clk), .PcReSet(rst), .NEWPC(IF_PC), .OLDPC(WB_PC), .PcSel(PcSel), .Address(Imm32), .Branch(Branch), .JumpTarget(IMM), .JrTarget(ID_RD1)
+      .Clk(clk), .PcReSet(rst), .NEWPC(IF_PC), .OLDPC(WB_PC), .PcSel(PcSel), .Address(Imm32), .Branch(Branch), .JumpTarget(IMM), .JrTarget(ID_RD1_DE), .Bobbles(Bobbles)
    ); 
    
    // 指令模块
@@ -246,12 +248,22 @@ module mips( clk, rst );
    );
 
    // MEM/WB 级寄存器
-   //                                 32   + 32         + 5        + 1
+   //                                 32    + 32         + 5        + 1
    assign Pipline_MEMWBRegister_in = {MEM_PC, MEM_WBData, MEM_RF_rd, MEM_RegW};
 
    // 转发相关 [判断]
-   assign ID_RD1_DE = (MEM_RF_rd == rs) ? MEM_WBData : ((EX_RF_rd == rs) ? EX_Alu_Result : ID_RD1_RF);
-   assign ID_RD2_DE = (MEM_RF_rd == rt) ? MEM_WBData : ((EX_RF_rd == rt) ? EX_Alu_Result : ID_RD2_RF);
+   assign ID_RD1_DE =
+         (rs == 05'b00000) ? 32'd0 : (
+            (MEM_RF_rd == rs) ? MEM_WBData : (
+               (EX_RF_rd == rs) ? EX_Alu_Result : ID_RD1_RF
+            )
+         );
+   assign ID_RD2_DE =
+         (rt == 5'b00000) ? 32'd0 : (
+            (MEM_RF_rd == rt) ? MEM_WBData : (
+               (EX_RF_rd == rt) ? EX_Alu_Result : ID_RD2_RF
+            )
+         );
 
    // 阻塞相关 [判断] Branch <> 3'000
    // TODO
@@ -263,7 +275,8 @@ module mips( clk, rst );
    //       OP = b100011    (EX_RF_rd == rs) || (EX_RF_rd == rt)
    //    取消当前操作 复读上一条指令 原地TP
 
-   // 如果 PcSel 为真，清理掉 IF 里的内容。
-   // assign Pipline_IFIDRegister_reset = PcSel ;
+   // 是否需要清理下一条指令 [跳转的时候 IF 级已经预加载了一条指令了，如果需要跳转的时候这条指令就是有问题的]
+   //assign Bobbles = PcSel || (Branch[1] && Branch[0]);
+   assign Bobbles = PcSel && ( (EX_ALUOp != 0) && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) );
 
 endmodule
