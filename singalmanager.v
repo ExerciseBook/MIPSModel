@@ -91,7 +91,7 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
                         Aluctrl <= `ALUOp_NOP;
                     end
                     default: begin
-                        out <= 12'b00000000000;
+                        out <= 12'b000000000000;
                         ExtOp <= `EXT_ZERO;
                         Aluctrl <= `ALUOp_NOP;
                     end
@@ -148,7 +148,7 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
                 Aluctrl <= `ALUOp_NOP;
             end
             default: begin
-                out <= 12'b00000000000;
+                out <= 12'b000000000000;
                 ExtOp <= `EXT_ZERO;
                 Aluctrl <= `ALUOp_NOP;
             end

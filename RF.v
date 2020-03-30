@@ -15,7 +15,7 @@ module RF( A1, A2, A3, WD, clk, RFWr, RD1, RD2 );
           rf[i] = 0;
    end
    
-   always @(negedge clk) begin
+   always @(posedge clk) begin
       $display("RFWr=%1B, WD=%8X, TargetAddr=%2X", RFWr, WD, A3);
 
 

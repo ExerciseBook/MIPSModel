@@ -253,4 +253,17 @@ module mips( clk, rst );
    assign ID_RD1_DE = (MEM_RF_rd == rs) ? MEM_WBData : ((EX_RF_rd == rs) ? EX_Alu_Result : ID_RD1_RF);
    assign ID_RD2_DE = (MEM_RF_rd == rt) ? MEM_WBData : ((EX_RF_rd == rt) ? EX_Alu_Result : ID_RD2_RF);
 
+   // 阻塞相关 [判断] Branch <> 3'000
+   // TODO
+   //    如果 前一条是运算指令 并且 当前的分支指令需要前一条指令的运算结果
+   //         ALUOp <> 0     (EX_RF_rd == rs) || (EX_RF_rd == rt)
+   //    取消当前操作 原地TP
+   //
+   //    如果 前一条是LW 并且 当前的分支指令需要前一条指令的运算结果
+   //       OP = b100011    (EX_RF_rd == rs) || (EX_RF_rd == rt)
+   //    取消当前操作 复读上一条指令 原地TP
+
+   // 如果 PcSel 为真，清理掉 IF 里的内容。
+   // assign Pipline_IFIDRegister_reset = PcSel ;
+
 endmodule

@@ -38,7 +38,6 @@ module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarg
         end
         else 
         begin
-            NEWPC = NEWPC+4;
             if(PcSel == 1) begin
                 for(i = 0; i < 30; i = i + 1)
                     temp[31 - i] = Address[29 - i];
@@ -46,7 +45,7 @@ module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarg
                 temp[1] = 0;
             
                 NEWPC = NEWPC + temp;
-            end
+            end else NEWPC = NEWPC+4;
         end
 
 
