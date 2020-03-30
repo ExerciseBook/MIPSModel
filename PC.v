@@ -1,17 +1,19 @@
-module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarget, Bobbles);
+module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarget, Bobbles, Interrupt);
 
     input   PcReSet;
-    input   PcSel;                 // bne beq 分支选择
+    input   PcSel;                  // bne beq 分支选择
     input   Clk;
-    input   [2:0] Branch;         // Branch[1] beq 标识, Branch[0] bne 标识, Branch[2..0] = 111 强制标识 , Branch[2] jr 标识
+    input   [2:0] Branch;           // Branch[1] beq 标识, Branch[0] bne 标识, Branch[2..0] = 111 强制标识 , Branch[2] jr 标识
     input   [25:0] JumpTarget;
-    input   [31:0] Address;     // bne beq 跳转目标
+    input   [31:0] Address;         // bne beq 跳转目标
     input   [31:0] JrTarget;
     input   [31:0] OLDPC;
     input   Bobbles;
     output  [31:0] NEWPC;
+    output  Interrupt;              // 无 懈 可 击
 
     reg [31:0] NEWPC;
+    reg Interrupt;
 
     integer i;
     reg [31:0] temp;
@@ -21,11 +23,13 @@ module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarg
         if (PcReSet == 1) begin
             NEWPC <= 32'h0000_3000;
             temp <= 32'h0000_3000;
+            Interrupt <= 1'b0;
         end
         
         if (Bobbles == 1'b0) begin
             if (Branch == 3'b111) begin
                 NEWPC = JrTarget;
+                Interrupt <= 1'b1;
             end
             else if (Branch == 3'b011) begin
                 for(i = 2; i < 28; i = i + 1)
@@ -36,7 +40,8 @@ module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarg
                 temp[28] = OLDPC[28];
                 temp[1] = 0;
                 temp[0] = 0;
-                NEWPC = temp;
+                NEWPC = temp;  // NEWPC = {OLDPC[31:28], JumpTarget, 2'b00};
+                Interrupt <= 1'b1;
             end
             else 
             begin
@@ -47,10 +52,20 @@ module PC(Clk, PcReSet, NEWPC, OLDPC, PcSel, Address, Branch, JumpTarget, JrTarg
                     temp[1] = 0;
                 
                     NEWPC = NEWPC + temp;
-                end else NEWPC = NEWPC+4;
+                    Interrupt <= 1'b1;
+                end else begin
+                    NEWPC = NEWPC+4;
+                    Interrupt <= 1'b0;
+                end
             end
         end
 
+    end
+
+    initial begin
+        NEWPC <= 32'h0000_3000;
+        temp <= 32'h0000_3000;
+        Interrupt <= 1'b0;
     end
 
 endmodule

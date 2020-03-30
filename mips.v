@@ -33,18 +33,19 @@ module mips( clk, rst );
 
 
    // 控制信号相关
-   wire jump;                    //指令跳转
+   wire jump;                    // 指令跳转
    wire [1:0]RegDst;             
-   wire [2:0]Branch;             //分支
-   wire ID_MemR;                 //读存储器
-   wire ID_Mem2R;                //数据存储器到寄存器堆
-   wire ID_MemW;                 //写数据存储器
-   wire ID_RegW;                 //寄存器堆写入数据
-   wire [1:0] AluSrc;            //运算器操作数选择
-   wire [1:0] ExtOp;             //位扩展/符号扩展选择
-   wire [4:0] ID_ALUOp;          //Alu运算选择
+   wire [2:0]Branch;             // 分支
+   wire ID_MemR;                 // 读存储器
+   wire ID_Mem2R;                // 数据存储器到寄存器堆
+   wire ID_MemW;                 // 写数据存储器
+   wire ID_RegW;                 // 寄存器堆写入数据
+   wire [1:0] AluSrc;            // 运算器操作数选择
+   wire [1:0] ExtOp;             // 位扩展/符号扩展选择
+   wire [4:0] ID_ALUOp;          // Alu运算选择
 
-   wire Bobbles;                 //气泡
+   wire Bobbles;                 // 气泡
+   wire JumpInterrupt;           // 无懈可击
 
    // 算数运算相关
    wire ID_zero;  
@@ -62,8 +63,8 @@ module mips( clk, rst );
 
    // IF/ID 级寄存器
    wire [32+32-1 : 0] Pipline_IFIDRegister_in;
-   wire [32+32-1 : 0] Pipline_IFIDRegister_out;
-   assign Pipline_IFIDRegister_in = Bobbles ? Pipline_IFIDRegister_out : {IF_PC, AnInstruction};
+   wire [32+32-1 : 0] Pipline_IFIDRegister_out_;
+   assign Pipline_IFIDRegister_in = Bobbles ? Pipline_IFIDRegister_out_ : {IF_PC, AnInstruction};
 
    wire Pipline_IFIDRegister_reset;
    wire Pipline_IFIDRegister_reset_;
@@ -71,10 +72,14 @@ module mips( clk, rst );
    wire Pipline_IFIDRegister_write;
    PiplineUniversalRegister #(.WIDTH(64)) Pipline_IFIDRegister(
       .clk(clk), .rst(Pipline_IFIDRegister_reset_), .Wr(Pipline_IFIDRegister_write),
-      .in(Pipline_IFIDRegister_in), .out(Pipline_IFIDRegister_out)
+      .in(Pipline_IFIDRegister_in), .out(Pipline_IFIDRegister_out_)
    );
 
    // 拆分指令
+
+   wire [32+32-1 : 0] Pipline_IFIDRegister_out;
+   assign Pipline_IFIDRegister_out = JumpInterrupt ? 64'd0 : Pipline_IFIDRegister_out_;
+
    wire [31:0] ID_PC;
    wire [5:0] Op;
    wire [5:0] Funct;
@@ -94,10 +99,10 @@ module mips( clk, rst );
    assign IMM     = Pipline_IFIDRegister_out[25:0];
 
    // 寄存器相关
-   wire [4:0] ID_RF_rd = (RegDst[1] === 0) ? rd : rt;
+   wire [4:0] ID_RF_rd = (RegDst[0] === 0) ? ( (RegDst[1] === 0) ? rd : rt ) : 5'b11111 ;
 
    wire [4:0] RF_rd;
-   assign RF_rd = (RegDst[0] === 0) ? ( WB_RF_rd ) : 5'b11111 ;
+   assign RF_rd = WB_RF_rd ;
 
    // 符号扩展相关
    wire [31:0] Imm32;
@@ -106,7 +111,7 @@ module mips( clk, rst );
    wire [31:0] ID_RD1_RF;
    wire [31:0] ID_RD2_RF;
    wire [31:0] RF_WD;
-   assign RF_WD = (RegDst[0] === 0) ? ( WB_WBData ) : (ID_PC + 4); 
+   assign RF_WD = WB_WBData ; 
 
    // 转发相关 [定义]
    wire [31:0] ID_RD1_DE;
@@ -114,14 +119,15 @@ module mips( clk, rst );
 
    // 算数运算相关
    wire [31:0] ID_Alu_AIn;
-   assign ID_Alu_AIn = (AluSrc[1] === 0) ? ID_RD1_DE : ID_RD2_DE;
+   assign ID_Alu_AIn = (RegDst[0] === 0) ? ((AluSrc[1] === 0) ? ID_RD1_DE : ID_RD2_DE) : ID_PC;
 
    wire [31:0] ID_Alu_BIn;
-   assign ID_Alu_BIn = (AluSrc[0] === 0) ? ID_RD2_DE : Imm32;
+   assign ID_Alu_BIn = (RegDst[0] === 0) ? ((AluSrc[0] === 0) ? ID_RD2_DE : Imm32) : 4;
 
    // 指令计数器模块
    PC U_PC (
-      .Clk(clk), .PcReSet(rst), .NEWPC(IF_PC), .OLDPC(WB_PC), .PcSel(PcSel), .Address(Imm32), .Branch(Branch), .JumpTarget(IMM), .JrTarget(ID_RD1_DE), .Bobbles(Bobbles)
+      .Clk(clk), .PcReSet(rst), .NEWPC(IF_PC), .OLDPC(WB_PC), .PcSel(PcSel), .Address(Imm32), .Branch(Branch), .JumpTarget(IMM), .JrTarget(ID_RD1_DE),
+      .Bobbles(Bobbles), .Interrupt(JumpInterrupt)
    ); 
    
    // 指令模块
@@ -161,8 +167,8 @@ module mips( clk, rst );
 
    // ID/EX 级寄存器
    wire [32+32+32+32+5+1+1+1+1+5-1 : 0] Pipline_IDEXRegister_in;
-   //                                32   + 32        + 32        + 32       + 5    + 1     + 1       + 1      + 1      , 5
-   assign Pipline_IDEXRegister_in = {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2_RF, ID_RF_rd, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp};
+   //                                32   + 32        + 32        + 32       + 5       + 1      + 1       + 1      + 1      , 5
+   assign Pipline_IDEXRegister_in = {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2_DE, ID_RF_rd, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp};
    wire [32+32+32+32+5+1+1+1+1+5-1 : 0] Pipline_IDEXRegister_out;
 
    wire Pipline_IDEXRegister_reset;
@@ -254,36 +260,32 @@ module mips( clk, rst );
    // 转发相关 [判断]
    assign ID_RD1_DE =
          (rs == 05'b00000) ? 32'd0 : (
-            (MEM_RF_rd == rs) ? MEM_WBData : (
-               (EX_RF_rd == rs) ? EX_Alu_Result : ID_RD1_RF
+            (EX_RF_rd == rs) ? EX_Alu_Result : (
+               (MEM_RF_rd == rs) ? MEM_WBData : ID_RD1_RF
             )
          );
    assign ID_RD2_DE =
          (rt == 5'b00000) ? 32'd0 : (
-            (MEM_RF_rd == rt) ? MEM_WBData : (
-               (EX_RF_rd == rt) ? EX_Alu_Result : ID_RD2_RF
+            (EX_RF_rd == rt) ? EX_Alu_Result : (
+               (MEM_RF_rd == rt) ? MEM_WBData : ID_RD2_RF
             )
          );
 
-   // 阻塞相关 [判断] Branch <> 3'000
-   // TODO
-   //    如果 前一条是运算指令 并且 当前的分支指令需要前一条指令的运算结果
-   //         ALUOp <> 0     (EX_RF_rd == rs) || (EX_RF_rd == rt)
+   // 阻塞相关[判断]
+   //    如果 是分支指令 并且 前一条是运算指令 并且 当前的分支指令需要前一条指令的运算结果 [1]
+   //        Branch[1] ^ Branch[0]      ALUOp <> 0     (EX_RF_rd == rs) || (EX_RF_rd == rt)
    //    取消当前操作 原地TP
    //
-   //    如果 前一条是LW 并且 当前的分支指令需要前一条指令的运算结果
+   //    如果 前一条是LW 并且 当前的分支指令需要前一条指令的运算结果 [2]
    //       OP = b100011    (EX_RF_rd == rs) || (EX_RF_rd == rt)
    //    取消当前操作 复读上一条指令 原地TP
-
-   // 是否需要清理下一条指令 [跳转的时候 IF 级已经预加载了一条指令了，如果需要跳转的时候这条指令就是有问题的]
-   //assign Bobbles = PcSel || (Branch[1] && Branch[0]);
    assign Bobbles =
       (Branch[1] ^ Branch[0]) && (
-         ( (EX_ALUOp != 0) && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) // 
-         || 
-         ( EX_Mem2R && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) //
-         ||
-         ( MEM_Mem2R && (MEM_RF_rd != 0) && ((MEM_RF_rd == rs) || (MEM_RF_rd == rt)) )
-      );
+         ( (EX_ALUOp != 0) && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) // [1]
+      )
+      || 
+      ( EX_Mem2R && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) // [2]
+      ||
+      ( MEM_Mem2R && (MEM_RF_rd != 0) && ((MEM_RF_rd == rs) || (MEM_RF_rd == rt)) ); // [2]
 
 endmodule
