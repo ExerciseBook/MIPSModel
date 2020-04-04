@@ -167,8 +167,11 @@ module mips( clk, rst );
 
    // ID/EX 级寄存器
    wire [32+32+32+32+5+1+1+1+1+5-1 : 0] Pipline_IDEXRegister_in;
-   //                                32   + 32        + 32        + 32       + 5       + 1      + 1       + 1      + 1      , 5
-   assign Pipline_IDEXRegister_in = {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2_DE, ID_RF_rd, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp};
+   
+   assign Pipline_IDEXRegister_in = Bobbles === 0 ?
+   //                                          32   + 32        + 32        + 32       + 5       + 1      + 1       + 1      + 1      , 5
+                                              {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2_DE, ID_RF_rd, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp} : 
+                                              {ID_PC, ID_Alu_AIn, ID_Alu_BIn, ID_RD2_DE, 5'b00000, ID_MemR, ID_Mem2R, ID_MemW, ID_RegW, ID_ALUOp} ;
    wire [32+32+32+32+5+1+1+1+1+5-1 : 0] Pipline_IDEXRegister_out;
 
    wire Pipline_IDEXRegister_reset;
