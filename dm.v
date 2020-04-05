@@ -18,5 +18,7 @@ module dm_4k( addr, din, DMWr, clk, dout );
       $display("Mem[00-07]=%8X, %8X, %8X, %8X, %8X, %8X, %8X, %8X",dmem[0],dmem[1],dmem[2],dmem[3],dmem[4],dmem[5],dmem[6],dmem[7]);
     
    end // end always
-      assign dout = dmem[addr];
+
+   assign dout = dmem[addr];
+   
 endmodule    

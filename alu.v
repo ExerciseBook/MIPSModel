@@ -28,7 +28,7 @@ module alu (A, B, ALUOp, C, Zero);
          `ALUOp_OR   : C = A | B;
          `ALUOp_NOR  : C = ~(A | B);
          `ALUOp_XOR  : C = A ^ B;
-         `ALUOp_SLT  : if (SignedA < SignedB) C = 1; else C = 0; //TODO
+         `ALUOp_SLT  : if (SignedA < SignedB) C = 1; else C = 0;
          `ALUOp_SLTU : if (A < B) C = 1; else C = 0;
       // `ALUOp_EQL  :
       // `ALUOp_BNE  :

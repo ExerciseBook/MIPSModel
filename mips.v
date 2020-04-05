@@ -16,7 +16,7 @@ module mips( clk, rst );
    wire Pipline_MEMWBRegister_reset_;
    assign Pipline_MEMWBRegister_reset_ = rst | Pipline_MEMWBRegister_reset;
    wire Pipline_MEMWBXRegister_write;
-   PiplineUniversalRegisterNeg #(.WIDTH(32+32+5+1)) Pipline_MEMWBRegister(
+   PipelineUniversalRegisterNeg #(.WIDTH(32+32+5+1)) Pipline_MEMWBRegister(
       .clk(clk), .rst(Pipline_MEMWBRegister_reset_), .Wr(Pipline_MEMWBRegister_write),
       .in(Pipline_MEMWBRegister_in), .out(Pipline_MEMWBRegister_out)
    );
@@ -70,7 +70,7 @@ module mips( clk, rst );
    wire Pipline_IFIDRegister_reset_;
    assign Pipline_IFIDRegister_reset_ = rst | Pipline_IFIDRegister_reset;
    wire Pipline_IFIDRegister_write;
-   PiplineUniversalRegister #(.WIDTH(64)) Pipline_IFIDRegister(
+   PipelineUniversalRegister #(.WIDTH(64)) Pipline_IFIDRegister(
       .clk(clk), .rst(Pipline_IFIDRegister_reset_), .Wr(Pipline_IFIDRegister_write),
       .in(Pipline_IFIDRegister_in), .out(Pipline_IFIDRegister_out_)
    );
@@ -162,7 +162,8 @@ module mips( clk, rst );
       .ExtOp(ExtOp),
       .Aluctrl(ID_ALUOp),
       .OpCode(Op),
-      .funct(Funct)
+      .funct(Funct),
+      .JumpInterrupt(JumpInterrupt)
    );
 
    // ID/EX 级寄存器
@@ -178,7 +179,7 @@ module mips( clk, rst );
    wire Pipline_IDEXRegister_reset_;
    assign Pipline_IDEXRegister_reset_ = rst | Pipline_IDEXRegister_reset;
    wire Pipline_IDEXRegister_write;
-   PiplineUniversalRegister #(.WIDTH(32+32+32+32+5+1+1+1+1+5)) Pipline_IDEXRegister(
+   PipelineUniversalRegister #(.WIDTH(32+32+32+32+5+1+1+1+1+5)) Pipline_IDEXRegister(
       .clk(clk), .rst(Pipline_IDEXRegister_reset_), .Wr(Pipline_IDEXRegister_write),
       .in(Pipline_IDEXRegister_in), .out(Pipline_IDEXRegister_out)
    );
@@ -220,7 +221,7 @@ module mips( clk, rst );
    wire Pipline_EXMEMRegister_reset_;
    assign Pipline_EXMEMRegister_reset_ = rst | Pipline_EXMEMRegister_reset;
    wire Pipline_EXMEMXRegister_write;
-   PiplineUniversalRegister #(.WIDTH(32+32+32+5+1+1+1+1)) Pipline_EXMEMRegister(
+   PipelineUniversalRegister #(.WIDTH(32+32+32+5+1+1+1+1)) Pipline_EXMEMRegister(
       .clk(clk), .rst(Pipline_EXMEMRegister_reset_), .Wr(Pipline_EXMEMRegister_write),
       .in(Pipline_EXMEMRegister_in), .out(Pipline_EXMEMRegister_out)
    );
@@ -261,6 +262,10 @@ module mips( clk, rst );
    assign Pipline_MEMWBRegister_in = {MEM_PC, MEM_WBData, MEM_RF_rd, MEM_RegW};
 
    // 转发相关 [判断]
+   // 若欲读取的寄存器号为 0 则直接返回 0
+   // 若欲读取的寄存器号和前一条指令的目标寄存器号相等则返回(转发)上一条指令的运算结果
+   // 若欲读取的寄存器号和前二条指令的目标寄存器号相等则返回(转发)上二条指令的运算结果
+   // 返回寄存器组模块的读取结果
    assign ID_RD1_DE =
          (rs == 05'b00000) ? 32'd0 : (
             (EX_RF_rd == rs) ? EX_Alu_Result : (
@@ -275,20 +280,34 @@ module mips( clk, rst );
          );
 
    // 阻塞相关[判断]
-   //    如果 是分支指令 并且 前一条是运算指令 并且 当前的分支指令需要前一条指令的运算结果 [1]
-   //        Branch[1] ^ Branch[0]      ALUOp <> 0     (EX_RF_rd == rs) || (EX_RF_rd == rt)
-   //    取消当前操作 原地TP
+   //    如果
+   //        是分支指令 并且
+   //        前一条是运算指令 并且
+   //        当前的分支指令需要前一条指令的运算结果 [1]
+   //          取消当前操作 原地TP
    //
-   //    如果 前一条是LW 并且 当前的分支指令需要前一条指令的运算结果 [2]
-   //       OP = b100011    (EX_RF_rd == rs) || (EX_RF_rd == rt)
-   //    取消当前操作 复读上一条指令 原地TP
+   //    如果
+   //        前一条是LW 并且
+   //        当前的分支指令需要前一条指令的运算结果 [2]
+   //          取消当前操作 复读上一条指令 原地TP
    assign Bobbles =
-      (Branch[1] ^ Branch[0]) && (
-         ( (EX_ALUOp != 0) && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) // [1]
-      )
+      (
+         (Branch[1] ^ Branch[0]) && 
+         (EX_ALUOp != 0) &&
+         (EX_RF_rd != 0) &&
+         ((EX_RF_rd == rs) || (EX_RF_rd == rt))
+      ) // [1]
       || 
-      ( EX_Mem2R && (EX_RF_rd != 0) && ((EX_RF_rd == rs) || (EX_RF_rd == rt)) ) // [2]
+      (
+         EX_Mem2R &&
+         (EX_RF_rd != 0) &&
+         ((EX_RF_rd == rs) || (EX_RF_rd == rt)) 
+      ) // [2]
       ||
-      ( MEM_Mem2R && (MEM_RF_rd != 0) && ((MEM_RF_rd == rs) || (MEM_RF_rd == rt)) ); // [2]
+      (
+         MEM_Mem2R &&
+         (MEM_RF_rd != 0) &&
+         ((MEM_RF_rd == rs) || (MEM_RF_rd == rt))
+      ); // [2]
 
 endmodule

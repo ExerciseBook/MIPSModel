@@ -1,4 +1,4 @@
-module PiplineUniversalRegister #(parameter WIDTH = 32)(clk, rst, Wr, in, out);
+module PipelineUniversalRegister #(parameter WIDTH = 32)(clk, rst, Wr, in, out);
             
    input                clk;
    input                rst;
@@ -19,7 +19,7 @@ module PiplineUniversalRegister #(parameter WIDTH = 32)(clk, rst, Wr, in, out);
 endmodule
 
 
-module PiplineUniversalRegisterNeg #(parameter WIDTH = 32)(clk, rst, Wr, in, out);
+module PipelineUniversalRegisterNeg #(parameter WIDTH = 32)(clk, rst, Wr, in, out);
             
    input                clk;
    input                rst;

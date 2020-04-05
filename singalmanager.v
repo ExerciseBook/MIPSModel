@@ -20,9 +20,9 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
 
     input JumpInterrupt;                // 无懈可击
 
-    reg [11:0] out;
+    reg [11:0] out;                     // 输出信号组
 
-    assign jump = out[11];
+    assign jump = out[11];              // 分解输出信号
     assign RegDst = out[10:9];
     assign Branch = out[8:6];
     assign MemR = out[5];
@@ -34,6 +34,7 @@ module SingalManager(jump, RegDst, Branch, MemR, Mem2R, MemW, RegW, Alusrc, ExtO
     always@(OpCode or funct)
     begin
         if (JumpInterrupt) begin
+            // 由于跳转，预装载的指令需要清除，因而这里需要阻塞
             out <= 12'b000000000000;
             ExtOp <= `EXT_ZERO;
             Aluctrl <= `ALUOp_NOP;
